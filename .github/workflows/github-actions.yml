@@ -81,5 +81,5 @@ jobs:
               -e AWS_REGION=${{ secrets.AWS_REGION }} \
               ${{ secrets.DOCKER_USERNAME }}/gasannes:latest
 
-            # Remove unused images to free space
+            #  Remove unused images to free space
             docker image prune -a -f

@@ -23,7 +23,7 @@ public class UploadController {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
-
+//
     @PostMapping
     public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
         try {

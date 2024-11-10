@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,35 +33,32 @@ jobs:
           docker tag app ${{ secrets.DOCKER_USERNAME }}/gasannes:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/gasannes:latest
 
-      #- name: Configure AWS credentials
-        #  uses: aws-actions/configure-aws-credentials@v1
-          #   with:
-          #    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }} # 등록한 Github Secret이 자동으로 불려짐.
-          #    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} #   등록한 Github Secret이 자동으로 불려짐.
-      #    aws-region: ${{ secrets.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-
-        #- name: Sync Bucket
-          #   env:
-          #    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          #    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        #    AWS_EC2_METADATA_DISABLED: true
-        #  working-directory: ./gasannes-s3-bucket
-          #  run: |
-          #  aws s3 sync \
-          #    --region ap-northeast-2 \
-          #   build s3://gasannes-s3-bucket \
-        #   --delete
+      - name: Sync Bucket
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: true
+        run: |
+          aws s3 sync \
+            --region ap-northeast-2 \
+            build s3://gasannes-s3-bucket \
+            --delete
 
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }} # EC2 인스턴스 퍼블릭 DNS
           username: ubuntu
-          key: ${{ secrets.PRIVATE_KEY }} #  pem 키
+          key: ${{ secrets.PRIVATE_KEY }} # pem 키
           script: |
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            # docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
             # Pull the latest image
             docker pull ${{ secrets.DOCKER_USERNAME }}/gasannes:latest
@@ -81,5 +77,5 @@ jobs:
               -e AWS_REGION=${{ secrets.AWS_REGION }} \
               ${{ secrets.DOCKER_USERNAME }}/gasannes:latest
 
-            #  Remove unused images to free space
+            # Remove unused images to free space
             docker image prune -a -f
